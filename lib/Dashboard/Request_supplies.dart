@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '/Style/app_colors.dart';
 import '../../constants/constants.dart';
+import '/service/api_service.dart';
 
 class RequestSuppliesPage extends StatefulWidget {
   const RequestSuppliesPage({Key? key}) : super(key: key);
@@ -263,7 +264,7 @@ class _RequestSuppliesPageState extends State<RequestSuppliesPage> {
     );
   }
 
-  void _submitRequest() {
+  Future<void> _submitRequest() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -280,52 +281,78 @@ class _RequestSuppliesPageState extends State<RequestSuppliesPage> {
       return;
     }
 
-    // Show success dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: const [
-            Icon(Icons.check_circle, color: AppColors.success, size: 32),
-            SizedBox(width: 12),
-            Text('تم إرسال الطلب'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'تم استلام طلبك بنجاح! سيتم مراجعته من قبل فريقنا في أقرب وقت.',
-              style: TextStyle(height: 1.5),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+    final selectedItems = _selectedItems.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
+
+    try {
+      await ApiService.post(
+        '/api/requests/supplies',
+        {
+          'grade': _selectedGrade,
+          'items': selectedItems,
+          'isUrgent': _isUrgent,
+          'notes': _additionalNotes,
+        },
+      );
+
+      // Show success dialog only if the backend call succeeded
+      // (UI message kept similar to original).
+      // ignore: use_build_context_synchronously
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.check_circle, color: AppColors.success, size: 32),
+              SizedBox(width: 12),
+              Text('تم إرسال الطلب'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'تم استلام طلبك بنجاح! سيتم مراجعته من قبل فريقنا في أقرب وقت.',
+                style: TextStyle(height: 1.5),
               ),
-              child: const Text(
-                'رقم الطلب: #SUP-2024-001',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.info,
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'رقم الطلب: #SUP-2024-001',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.info,
+                  ),
                 ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Go back to dashboard
+              },
+              child: const Text('حسناً'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to dashboard
-            },
-            child: const Text('حسناً'),
-          ),
-        ],
-      ),
-    );
+      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }

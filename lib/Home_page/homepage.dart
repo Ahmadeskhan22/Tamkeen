@@ -264,7 +264,7 @@ class HomePage extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'خطوات الأمل هي منصة إنسانية مجتمعية مصممة لدعم الطلاب المحتاجين. '
+                          'خطوات الأمل(تمكين) هي منصة إنسانية مجتمعية مصممة لدعم الطلاب المحتاجين. '
                           'نوفر خدمات مجانية تماماً بما في ذلك الأدوات المدرسية، الزي الموحد، '
                           'الدروس التطوعية، الوجبات المدرسية، والدعم النفسي. '
                           'نؤمن بأن كل طفل يستحق فرصة متساوية في التعليم.',
@@ -289,7 +289,7 @@ class HomePage extends StatelessWidget {
                     const Divider(),
                     const SizedBox(height: 12),
                     Text(
-                      '© 2024 ${AppConstants.appNameArabic}',
+                      '© 2026 ${AppConstants.appNameArabic}',
                       style: TextStyle(
                         color: AppColors.textLight,
                         fontSize: 12,

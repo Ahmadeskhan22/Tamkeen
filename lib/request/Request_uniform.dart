@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '/Style/app_colors.dart';
 import '../../constants/constants.dart';
+import '/service/api_service.dart';
 
 class RequestUniformPage extends StatefulWidget {
   const RequestUniformPage({Key? key}) : super(key: key);
@@ -190,24 +191,45 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
     );
   }
 
-  void _submitRequest() {
+  Future<void> _submitRequest() async {
     if (_formKey.currentState!.validate()) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('تم إرسال الطلب'),
-          content: const Text('سيتم مراجعة طلبك قريباً'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: const Text('حسناً'),
-            ),
-          ],
-        ),
-      );
+      try {
+        await ApiService.post(
+          '/api/requests/uniform',
+          {
+            'grade': _selectedGrade,
+            'uniformSize': _uniformSize,
+            'needWinterClothing': _needWinterClothing,
+            'winterSize': _winterSize,
+            'notes': _additionalNotes,
+          },
+        );
+
+        // ignore: use_build_context_synchronously
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('تم إرسال الطلب'),
+            content: const Text('سيتم مراجعة طلبك قريباً'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('حسناً'),
+              ),
+            ],
+          ),
+        );
+      } catch (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 }

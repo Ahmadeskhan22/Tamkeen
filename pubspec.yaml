@@ -1,12 +1,20 @@
 name: hopesteps
 description: A humanitarian mobile application for supporting underprivileged school students
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
-dependencies: { flutter: { sdk: flutter }, cupertino_icons: ^1.0.2, flutter_localizations: { sdk: flutter }, intl: ^0.20.2 , google_fonts: ^8.0.0}
+dependencies:
+  {
+    flutter: { sdk: flutter },
+    cupertino_icons: ^1.0.2,
+    flutter_localizations: { sdk: flutter },
+    intl: ^0.20.2,
+    google_fonts: ^8.0.0,
+    http: ^1.6.0,
+  }
 
 dev_dependencies:
   flutter_test:
@@ -17,16 +25,16 @@ flutter:
   uses-material-design: true
 
   # To add custom fonts:
-    #   fonts:
-    #   - family: Tajawal
-    #     fonts:
-    #       - asset: assets/fonts/Tajawal-Regular.ttf
-    #     - asset: assets/fonts/Tajawal-Bold.ttf
-    #         weight: 700
-          #       - asset: assets/fonts/Tajawal-Medium.ttf
-    #       weight: 500
-          #     - asset: assets/fonts/Tajawal-Light.ttf
-    #       weight: 300
+  #   fonts:
+  #   - family: Tajawal
+  #     fonts:
+  #       - asset: assets/fonts/Tajawal-Regular.ttf
+  #     - asset: assets/fonts/Tajawal-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/Tajawal-Medium.ttf
+  #       weight: 500
+  #     - asset: assets/fonts/Tajawal-Light.ttf
+  #       weight: 300
 
   # To add assets:
   # assets:

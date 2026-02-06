@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '/Style/app_colors.dart';
 import '../../constants/constants.dart';
+import '/service/api_service.dart';
 
 class RequestMealsPage extends StatefulWidget {
   const RequestMealsPage({Key? key}) : super(key: key);
@@ -125,12 +126,33 @@ class _RequestMealsPageState extends State<RequestMealsPage> {
     );
   }
 
-  void _submitRequest() {
+  Future<void> _submitRequest() async {
     if (_formKey.currentState!.validate() && _selectedMealTypes.isNotEmpty) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تم إرسال طلبك بنجاح')));
+      try {
+        await ApiService.post(
+          '/api/requests/meals',
+          {
+            'grade': _selectedGrade,
+            'mealTypes': _selectedMealTypes,
+            'hasDietaryRestrictions': _hasDietaryRestrictions,
+            'dietaryNotes': _dietaryNotes,
+          },
+        );
+
+        // ignore: use_build_context_synchronously
+        Navigator.pop(context);
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تم إرسال طلبك بنجاح')));
+      } catch (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('الرجاء اختيار نوع وجبة واحد على الأقل')),

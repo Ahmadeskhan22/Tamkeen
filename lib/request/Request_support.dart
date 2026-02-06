@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '/Style/app_colors.dart';
 import '../../constants/constants.dart';
+import '/service/api_service.dart';
 
 class RequestSupportPage extends StatefulWidget {
   const RequestSupportPage({Key? key}) : super(key: key);
@@ -267,76 +268,96 @@ class _RequestSupportPageState extends State<RequestSupportPage> {
     );
   }
 
-  void _submitRequest() {
+  Future<void> _submitRequest() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: const [
-            Icon(Icons.check_circle, color: AppColors.success, size: 32),
-            SizedBox(width: 12),
-            Text('تم استلام طلبك'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _isUrgent
-                  ? 'سيتواصل معك أحد المتخصصين في أقرب وقت ممكن.'
-                  : 'شكراً لثقتك. سيتواصل معك أحد المتخصصين قريباً.',
-              style: const TextStyle(height: 1.5),
-            ),
-            const SizedBox(height: 16),
-            if (_isUrgent)
+    try {
+      await ApiService.post(
+        '/api/requests/support',
+        {
+          'supportType': _supportType,
+          'isAnonymous': _isAnonymous,
+          'isUrgent': _isUrgent,
+          'description': _description,
+        },
+      );
+
+      // ignore: use_build_context_synchronously
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.check_circle, color: AppColors.success, size: 32),
+              SizedBox(width: 12),
+              Text('تم استلام طلبك'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isUrgent
+                    ? 'سيتواصل معك أحد المتخصصين في أقرب وقت ممكن.'
+                    : 'شكراً لثقتك. سيتواصل معك أحد المتخصصين قريباً.',
+                style: const TextStyle(height: 1.5),
+              ),
+              const SizedBox(height: 16),
+              if (_isUrgent)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'إذا كانت حالتك طارئة جداً، يرجى الاتصال بخط الطوارئ الآن.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.1),
+                  color: AppColors.info.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'إذا كانت حالتك طارئة جداً، يرجى الاتصال بخط الطوارئ الآن.',
-                  style: TextStyle(
-                    fontSize: 12,
+                child: Text(
+                  'رقم الطلب: #SUP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.warning,
+                    color: AppColors.info,
                   ),
                 ),
               ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'رقم الطلب: #SUP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.info,
-                ),
-              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Go back
+              },
+              child: const Text('حسناً'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back
-            },
-            child: const Text('حسناً'),
-          ),
-        ],
-      ),
-    );
+      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }

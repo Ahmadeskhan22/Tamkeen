@@ -1,0 +1,17 @@
+{
+  "name": "hopesteps-backend",
+  "version": "1.0.0",
+  "description": "Backend API for HopeSteps student support app",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "cors": "2.8.6",
+    "express": "5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "3.1.11"
+  }
+}

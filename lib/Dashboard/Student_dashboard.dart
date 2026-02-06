@@ -366,12 +366,12 @@ class StudentProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'محمد أحمد',
+                  ' أحمد',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'الصف الثامن',
+                  'الصف رابع ',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.textSecondary,
