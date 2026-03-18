@@ -14,6 +14,8 @@ dependencies:
     intl: ^0.20.2,
     google_fonts: ^8.0.0,
     http: ^1.6.0,
+    shared_preferences: ^2.2.2
+
   }
 
 dev_dependencies:
@@ -23,20 +25,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # To add custom fonts:
-  #   fonts:
-  #   - family: Tajawal
-  #     fonts:
-  #       - asset: assets/fonts/Tajawal-Regular.ttf
-  #     - asset: assets/fonts/Tajawal-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/Tajawal-Medium.ttf
-  #       weight: 500
-  #     - asset: assets/fonts/Tajawal-Light.ttf
-  #       weight: 300
-
-  # To add assets:
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/

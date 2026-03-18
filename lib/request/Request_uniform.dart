@@ -1,7 +1,11 @@
+// lib/request/Request_uniform.dart
+// FIX: POST to /api/requests with type:'uniform'
+
 import 'package:flutter/material.dart';
-import '/Style/app_colors.dart';
-import '../../constants/constants.dart';
-import '/service/api_service.dart';
+import '../Style/app_colors.dart';
+import '../constants/constants.dart';
+import '../service/api_service.dart';
+import '../constants/api_config.dart';
 
 class RequestUniformPage extends StatefulWidget {
   const RequestUniformPage({Key? key}) : super(key: key);
@@ -17,21 +21,19 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
   bool _needWinterClothing = false;
   String? _winterSize;
   String _additionalNotes = '';
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('طلب زي مدرسي'),
-        ),
+        appBar: AppBar(title: const Text('طلب زي مدرسي')),
         body: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // Header
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -40,27 +42,21 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
                   border: Border.all(color: AppColors.uniform.withOpacity(0.3)),
                 ),
                 child: Row(
-                  children: [
-                    const Icon(Icons.checkroom,
-                        color: AppColors.uniform, size: 48),
-                    const SizedBox(width: 16),
+                  children: const [
+                    Icon(Icons.checkroom, color: AppColors.uniform, size: 48),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'الزي المدرسي',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.uniform,
-                            ),
-                          ),
+                        children: [
+                          Text('الزي المدرسي',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.uniform)),
                           SizedBox(height: 4),
-                          Text(
-                            'زي موحد نظيف ومناسب',
-                            style: TextStyle(fontSize: 14),
-                          ),
+                          Text('زي موحد نظيف ومناسب',
+                              style: TextStyle(fontSize: 14)),
                         ],
                       ),
                     ),
@@ -68,8 +64,6 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Grade
               const Text('الصف الدراسي',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
@@ -81,16 +75,13 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                items: AppConstants.gradeLevels.map((grade) {
-                  return DropdownMenuItem(value: grade, child: Text(grade));
-                }).toList(),
-                onChanged: (value) => setState(() => _selectedGrade = value),
-                validator: (value) =>
-                    value == null ? 'الرجاء اختيار الصف' : null,
+                items: AppConstants.gradeLevels
+                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedGrade = v),
+                validator: (v) => v == null ? 'الرجاء اختيار الصف' : null,
               ),
               const SizedBox(height: 20),
-
-              // Uniform Size
               const Text('مقاس الزي المدرسي',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
@@ -102,16 +93,13 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                items: AppConstants.uniformSizes.map((size) {
-                  return DropdownMenuItem(value: size, child: Text(size));
-                }).toList(),
-                onChanged: (value) => setState(() => _uniformSize = value),
-                validator: (value) =>
-                    value == null ? 'الرجاء اختيار المقاس' : null,
+                items: AppConstants.uniformSizes
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
+                onChanged: (v) => setState(() => _uniformSize = v),
+                validator: (v) => v == null ? 'الرجاء اختيار المقاس' : null,
               ),
               const SizedBox(height: 24),
-
-              // Winter Clothing
               Card(
                 color: _needWinterClothing
                     ? AppColors.info.withOpacity(0.1)
@@ -124,8 +112,8 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
                       subtitle: const Text('معطف، سترة، أو ملابس دافئة'),
                       value: _needWinterClothing,
                       activeColor: AppColors.uniform,
-                      onChanged: (value) =>
-                          setState(() => _needWinterClothing = value ?? false),
+                      onChanged: (v) =>
+                          setState(() => _needWinterClothing = v ?? false),
                       secondary: const Icon(Icons.ac_unit),
                     ),
                     if (_needWinterClothing) ...[
@@ -139,12 +127,11 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          items: AppConstants.uniformSizes.map((size) {
-                            return DropdownMenuItem(
-                                value: size, child: Text(size));
-                          }).toList(),
-                          onChanged: (value) =>
-                              setState(() => _winterSize = value),
+                          items: AppConstants.uniformSizes
+                              .map((s) =>
+                                  DropdownMenuItem(value: s, child: Text(s)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _winterSize = v),
                         ),
                       ),
                     ],
@@ -152,8 +139,6 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Notes
               const Text('ملاحظات إضافية',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
@@ -164,20 +149,24 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                onChanged: (value) => _additionalNotes = value,
+                onChanged: (v) => _additionalNotes = v,
               ),
               const SizedBox(height: 32),
-
-              // Submit
               ElevatedButton(
-                onPressed: _submitRequest,
+                onPressed: _isLoading ? null : _submitRequest,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.uniform,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('إرسال الطلب',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5))
+                    : const Text('إرسال الطلب',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
@@ -192,44 +181,48 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
   }
 
   Future<void> _submitRequest() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        await ApiService.post(
-          '/api/requests/uniform',
-          {
-            'grade': _selectedGrade,
-            'uniformSize': _uniformSize,
-            'needWinterClothing': _needWinterClothing,
-            'winterSize': _winterSize,
-            'notes': _additionalNotes,
-          },
-        );
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    try {
+      await ApiService.post(ApiConfig.requests, {
+        'title': 'طلب زي مدرسي',
+        'description':
+            'مقاس: $_uniformSize${_needWinterClothing ? ' + ملابس شتوية' : ''}',
+        'type': 'uniform',
+        'urgency': 'medium',
+        'isPublic': true,
+        'grade': _selectedGrade,
+        'uniformSize': _uniformSize,
+        'needWinterClothing': _needWinterClothing,
+        if (_winterSize != null) 'winterSize': _winterSize,
+        'notes': _additionalNotes,
+      });
 
-        // ignore: use_build_context_synchronously
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('تم إرسال الطلب'),
-            content: const Text('سيتم مراجعة طلبك قريباً'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                child: const Text('حسناً'),
-              ),
-            ],
-          ),
-        );
-      } catch (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('تم إرسال الطلب'),
+          content: const Text('سيتم مراجعة طلبك قريباً'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: const Text('حسناً'),
+            ),
+          ],
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(e.userMessage), backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 }

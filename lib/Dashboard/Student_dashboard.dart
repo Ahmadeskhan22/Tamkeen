@@ -1,12 +1,23 @@
+// lib/Dashboard/Student_dashboard.dart
+// FIXES:
+//  - Corrected all import paths
+//  - MyRequestsPage now fetches real data from /api/requests/my
+//  - StudentProfilePage uses AuthService for real user data + logout
+
 import 'package:flutter/material.dart';
-import '/Style/app_colors.dart';
-import '../../constants/constants.dart';
-import '../../service/service_card.dart';
-import '/Dashboard/Request_supplies.dart';
-import '/request/Request_tutoring.dart';
-import '/request/Request_meals.dart';
-import '/request/Request_support.dart';
-import '/request/Request_uniform.dart';
+import '../Style/app_colors.dart';
+import '../constants/constants.dart';
+import '../service/service_card.dart';
+import '../request/Request_supplies.dart';
+import '../request/Request_tutoring.dart';
+import '../request/Request_meals.dart';
+import '../request/Request_support.dart';
+import '../request/Request_uniform.dart';
+import '../service/api_service.dart';
+import '../constants/api_config.dart';
+import '../models/request_model.dart';
+import '../auth/auth_service.dart';
+import '../auth/login_page.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({Key? key}) : super(key: key);
@@ -18,28 +29,31 @@ class StudentDashboard extends StatefulWidget {
 class _StudentDashboardState extends State<StudentDashboard> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const StudentHomePage(),
-    const MyRequestsPage(),
-    const StudentProfilePage(),
-  ];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const StudentHomePage(),
+      const MyRequestsPage(),
+      const StudentProfilePage(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: _pages[_selectedIndex],
+        body: IndexedStack(index: _selectedIndex, children: _pages),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
+          onTap: (i) => setState(() => _selectedIndex = i),
           selectedItemColor: AppColors.primary,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.list_alt),
-              label: 'طلباتي',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'طلباتي'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'حسابي'),
           ],
         ),
@@ -48,114 +62,68 @@ class _StudentDashboardState extends State<StudentDashboard> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Home tab
+// ─────────────────────────────────────────────────────────────────────────────
+
 class StudentHomePage extends StatelessWidget {
   const StudentHomePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final user = AuthService.instance.currentUser;
     return CustomScrollView(
       slivers: [
         SliverAppBar(
           expandedHeight: 180,
           pinned: true,
           flexibleSpace: FlexibleSpaceBar(
-            title: const Text(
-              'لوحة الطالب',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            title: const Text('لوحة الطالب',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             background: Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.primaryGradient,
-              ),
+              decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 40),
-                    Icon(
-                      Icons.school,
-                      size: 50,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
+                    Icon(Icons.school, size: 50, color: Colors.white.withOpacity(0.9)),
                   ],
                 ),
               ),
             ),
           ),
         ),
-
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'مرحباً بك! 👋',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
                 Text(
-                  'اختر الخدمة التي تحتاجها',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textSecondary,
-                  ),
+                  'مرحباً${user != null ? '، ${user.name}' : ''} 👋',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
+                const SizedBox(height: 6),
+                Text('اختر الخدمة التي تحتاجها',
+                    style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
               ],
             ),
           ),
         ),
-
-        // Quick Stats
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'طلبات نشطة',
-                    '3',
-                    Icons.pending_actions,
-                    AppColors.warning,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    'طلبات مكتملة',
-                    '7',
-                    Icons.check_circle,
-                    AppColors.success,
-                  ),
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: _QuickStats(),
           ),
         ),
-
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                const Text(
-                  'الخدمات المتاحة',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'اضغط على الخدمة لتقديم طلب جديد',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: Text('الخدمات المتاحة',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ),
         ),
-
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           sliver: SliverGrid(
@@ -171,70 +139,96 @@ class StudentHomePage extends StatelessWidget {
                 description: 'حقائب، دفاتر، أقلام',
                 icon: Icons.backpack,
                 color: AppColors.supplies,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const RequestSuppliesPage(),
-                  ),
-                ),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RequestSuppliesPage())),
               ),
               ServiceCard(
                 title: 'الزي المدرسي',
                 description: 'زي موحد وملابس',
                 icon: Icons.checkroom,
                 color: AppColors.uniform,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RequestUniformPage()),
-                ),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RequestUniformPage())),
               ),
               ServiceCard(
                 title: 'دروس تطوعية',
                 description: 'مساعدة في المواد',
                 icon: Icons.menu_book,
                 color: AppColors.tutoring,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const RequestTutoringPage(),
-                  ),
-                ),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RequestTutoringPage())),
               ),
               ServiceCard(
                 title: 'وجبات مدرسية',
                 description: 'وجبات صحية',
                 icon: Icons.restaurant,
                 color: AppColors.meals,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RequestMealsPage()),
-                ),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RequestMealsPage())),
               ),
               ServiceCard(
                 title: 'دعم نفسي',
                 description: 'استشارات سرية',
                 icon: Icons.psychology,
                 color: AppColors.support,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RequestSupportPage()),
-                ),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RequestSupportPage())),
               ),
             ]),
           ),
         ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+      ],
+    );
+  }
+}
 
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+/// Quick stats widget that fetches actual counts from the backend
+class _QuickStats extends StatefulWidget {
+  @override
+  State<_QuickStats> createState() => _QuickStatsState();
+}
+
+class _QuickStatsState extends State<_QuickStats> {
+  int _active = 0;
+  int _completed = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final data = await ApiService.get(ApiConfig.myRequests);
+      final requests = (data['data'] as List)
+          .map((e) => RequestModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _active = requests.where((r) =>
+            ['pending', 'under_review', 'approved', 'in_progress'].contains(r.status)).length;
+        _completed = requests.where((r) =>
+            ['fulfilled', 'closed'].contains(r.status)).length;
+      });
+    } catch (_) {
+      // Silently ignore — stats stay at 0
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: _statCard('طلبات نشطة', '$_active', Icons.pending_actions, AppColors.warning)),
+        const SizedBox(width: 12),
+        Expanded(child: _statCard('طلبات مكتملة', '$_completed', Icons.check_circle, AppColors.success)),
       ],
     );
   }
 
-  Widget _buildStatCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _statCard(String label, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -247,98 +241,161 @@ class StudentHomePage extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
+          Text(value,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-          ),
+          Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         ],
       ),
     );
   }
 }
 
-class MyRequestsPage extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+//  My Requests tab — real API data
+// ─────────────────────────────────────────────────────────────────────────────
+
+class MyRequestsPage extends StatefulWidget {
   const MyRequestsPage({Key? key}) : super(key: key);
+
+  @override
+  State<MyRequestsPage> createState() => _MyRequestsPageState();
+}
+
+class _MyRequestsPageState extends State<MyRequestsPage> {
+  List<RequestModel> _requests = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRequests();
+  }
+
+  Future<void> _loadRequests() async {
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      final data = await ApiService.get(ApiConfig.myRequests);
+      setState(() {
+        _requests = (data['data'] as List)
+            .map((e) => RequestModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      setState(() { _error = e.userMessage; _isLoading = false; });
+    } catch (e) {
+      setState(() { _error = 'حدث خطأ، حاول مرة أخرى'; _isLoading = false; });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
         const SliverAppBar(title: Text('طلباتي'), pinned: true),
-        SliverPadding(
-          padding: const EdgeInsets.all(20),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              _buildRequestCard(
-                'طلب أدوات مدرسية',
-                'قيد المراجعة',
-                'منذ يومين',
-                AppColors.warning,
-                Icons.pending,
+        if (_isLoading)
+          const SliverFillRemaining(
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_error != null)
+          SliverFillRemaining(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 60, color: AppColors.error),
+                  const SizedBox(height: 16),
+                  Text(_error!),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                      onPressed: _loadRequests, child: const Text('إعادة المحاولة')),
+                ],
               ),
-              const SizedBox(height: 12),
-              _buildRequestCard(
-                'طلب وجبة غداء',
-                'تمت الموافقة',
-                'منذ أسبوع',
-                AppColors.success,
-                Icons.check_circle,
+            ),
+          )
+        else if (_requests.isEmpty)
+            const SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inbox, size: 80, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text('لا توجد طلبات بعد',
+                        style: TextStyle(fontSize: 18, color: AppColors.textSecondary)),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              _buildRequestCard(
-                'طلب زي مدرسي',
-                'مكتمل',
-                'منذ أسبوعين',
-                AppColors.info,
-                Icons.done_all,
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (ctx, i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _RequestCard(request: _requests[i]),
+                  ),
+                  childCount: _requests.length,
+                ),
               ),
-            ]),
-          ),
-        ),
+            ),
       ],
     );
   }
+}
 
-  Widget _buildRequestCard(
-    String title,
-    String status,
-    String time,
-    Color statusColor,
-    IconData statusIcon,
-  ) {
+class _RequestCard extends StatelessWidget {
+  final RequestModel request;
+  const _RequestCard({required this.request});
+
+  Color get _statusColor {
+    switch (request.status) {
+      case 'fulfilled': return AppColors.success;
+      case 'approved':  return AppColors.info;
+      case 'rejected':  return AppColors.error;
+      case 'in_progress': return AppColors.primary;
+      default:          return AppColors.warning;
+    }
+  }
+
+  IconData get _statusIcon {
+    switch (request.status) {
+      case 'fulfilled':   return Icons.done_all;
+      case 'approved':    return Icons.check_circle;
+      case 'rejected':    return Icons.cancel;
+      case 'in_progress': return Icons.autorenew;
+      default:            return Icons.pending;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: Icon(statusIcon, color: statusColor, size: 32),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: Icon(_statusIcon, color: _statusColor, size: 32),
+        title: Text(request.title,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text(time, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            Text(request.typeLabel,
+                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           ],
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
+            color: _statusColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            status,
+            request.statusLabel,
             style: TextStyle(
-              color: statusColor,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
+                color: _statusColor, fontSize: 12, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -346,11 +403,27 @@ class MyRequestsPage extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Profile tab — real user data + logout
+// ─────────────────────────────────────────────────────────────────────────────
+
 class StudentProfilePage extends StatelessWidget {
   const StudentProfilePage({Key? key}) : super(key: key);
 
+  Future<void> _logout(BuildContext context) async {
+    await AuthService.instance.logout();
+    if (!context.mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+          (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = AuthService.instance.currentUser;
+
     return CustomScrollView(
       slivers: [
         const SliverAppBar(title: Text('حسابي'), pinned: true),
@@ -359,39 +432,38 @@ class StudentProfilePage extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 50,
                   backgroundColor: AppColors.primary,
-                  child: Icon(Icons.person, size: 50, color: Colors.white),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  ' أحمد',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'الصف رابع ',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textSecondary,
+                  child: Text(
+                    user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : '؟',
+                    style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
+                const SizedBox(height: 16),
+                Text(user?.name ?? 'الطالب',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                Text(user?.email ?? '',
+                    style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                if (user?.isVerified == true) ...[
+                  const SizedBox(height: 8),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.verified, color: AppColors.info, size: 18),
+                      SizedBox(width: 4),
+                      Text('حساب موثّق', style: TextStyle(color: AppColors.info, fontSize: 13)),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 32),
-                _buildProfileOption(Icons.edit, 'تعديل الملف الشخصي', () {}),
-                _buildProfileOption(Icons.notifications, 'الإشعارات', () {}),
-                _buildProfileOption(
-                  Icons.privacy_tip,
-                  'الخصوصية والأمان',
-                  () {},
-                ),
-                _buildProfileOption(Icons.help, 'المساعدة والدعم', () {}),
-                _buildProfileOption(
-                  Icons.logout,
-                  'تسجيل الخروج',
-                  () {},
-                  isDestructive: true,
-                ),
+                _option(Icons.edit,          'تعديل الملف الشخصي', () {}, context),
+                _option(Icons.notifications, 'الإشعارات',          () {}, context),
+                _option(Icons.privacy_tip,   'الخصوصية والأمان',  () {}, context),
+                _option(Icons.help,          'المساعدة والدعم',   () {}, context),
+                _option(Icons.logout,        'تسجيل الخروج',
+                        () => _logout(context), context, isDestructive: true),
               ],
             ),
           ),
@@ -400,25 +472,15 @@ class StudentProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileOption(
-    IconData icon,
-    String title,
-    VoidCallback onTap, {
-    bool isDestructive = false,
-  }) {
+  Widget _option(IconData icon, String title, VoidCallback onTap, BuildContext context,
+      {bool isDestructive = false}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: isDestructive ? AppColors.error : AppColors.primary,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isDestructive ? AppColors.error : AppColors.textPrimary,
-          ),
-        ),
+        leading: Icon(icon, color: isDestructive ? AppColors.error : AppColors.primary),
+        title: Text(title,
+            style: TextStyle(
+                color: isDestructive ? AppColors.error : AppColors.textPrimary)),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),

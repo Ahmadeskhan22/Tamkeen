@@ -1,7 +1,11 @@
+// lib/request/Request_meals.dart
+// FIX: POST to /api/requests with type:'food'
+
 import 'package:flutter/material.dart';
-import '/Style/app_colors.dart';
-import '../../constants/constants.dart';
-import '/service/api_service.dart';
+import '../Style/app_colors.dart';
+import '../constants/constants.dart';
+import '../service/api_service.dart';
+import '../constants/api_config.dart';
 
 class RequestMealsPage extends StatefulWidget {
   const RequestMealsPage({Key? key}) : super(key: key);
@@ -16,6 +20,7 @@ class _RequestMealsPageState extends State<RequestMealsPage> {
   final List<String> _selectedMealTypes = [];
   bool _hasDietaryRestrictions = false;
   String _dietaryNotes = '';
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -34,27 +39,23 @@ class _RequestMealsPageState extends State<RequestMealsPage> {
                   color: AppColors.meals.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.restaurant, color: AppColors.meals, size: 40),
                     SizedBox(width: 16),
                     Expanded(
                       child: Text(
                         'وجبات صحية يومية للطلاب',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'الصف الدراسي',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              const Text('الصف الدراسي',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedGrade,
@@ -62,15 +63,12 @@ class _RequestMealsPageState extends State<RequestMealsPage> {
                 items: AppConstants.gradeLevels
                     .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                     .toList(),
-                onChanged: (value) => setState(() => _selectedGrade = value),
-                validator: (value) =>
-                    value == null ? 'الرجاء اختيار الصف' : null,
+                onChanged: (v) => setState(() => _selectedGrade = v),
+                validator: (v) => v == null ? 'الرجاء اختيار الصف' : null,
               ),
               const SizedBox(height: 20),
-              const Text(
-                'نوع الوجبة المطلوبة',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              const Text('نوع الوجبة المطلوبة',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               ...AppConstants.mealTypes.map((meal) {
                 return CheckboxListTile(
@@ -79,19 +77,21 @@ class _RequestMealsPageState extends State<RequestMealsPage> {
                   activeColor: AppColors.meals,
                   onChanged: (checked) {
                     setState(() {
-                      if (checked!)
+                      if (checked == true) {
                         _selectedMealTypes.add(meal);
-                      else
+                      } else {
                         _selectedMealTypes.remove(meal);
+                      }
                     });
                   },
                 );
-              }).toList(),
-              const SizedBox(height: 20),
+              }),
+              const SizedBox(height: 16),
               Card(
                 child: CheckboxListTile(
                   title: const Text('لدي قيود غذائية أو حساسية'),
                   value: _hasDietaryRestrictions,
+                  activeColor: AppColors.meals,
                   onChanged: (v) =>
                       setState(() => _hasDietaryRestrictions = v!),
                 ),
@@ -99,9 +99,11 @@ class _RequestMealsPageState extends State<RequestMealsPage> {
               if (_hasDietaryRestrictions) ...[
                 const SizedBox(height: 12),
                 TextFormField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'اذكر القيود الغذائية أو الحساسية',
                     hintText: 'مثال: حساسية من المكسرات',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   maxLines: 2,
                   onChanged: (v) => _dietaryNotes = v,
@@ -109,15 +111,20 @@ class _RequestMealsPageState extends State<RequestMealsPage> {
               ],
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _submitRequest,
+                onPressed: _isLoading ? null : _submitRequest,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.meals,
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text(
-                  'إرسال الطلب',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5))
+                    : const Text('إرسال الطلب', style: TextStyle(fontSize: 18)),
               ),
             ],
           ),
@@ -127,36 +134,42 @@ class _RequestMealsPageState extends State<RequestMealsPage> {
   }
 
   Future<void> _submitRequest() async {
-    if (_formKey.currentState!.validate() && _selectedMealTypes.isNotEmpty) {
-      try {
-        await ApiService.post(
-          '/api/requests/meals',
-          {
-            'grade': _selectedGrade,
-            'mealTypes': _selectedMealTypes,
-            'hasDietaryRestrictions': _hasDietaryRestrictions,
-            'dietaryNotes': _dietaryNotes,
-          },
-        );
-
-        // ignore: use_build_context_synchronously
-        Navigator.pop(context);
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم إرسال طلبك بنجاح')));
-      } catch (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('حدث خطأ أثناء إرسال الطلب، حاول مرة أخرى'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } else {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedMealTypes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء اختيار نوع وجبة واحد على الأقل')),
+        const SnackBar(
+            content: Text('الرجاء اختيار نوع وجبة واحد على الأقل'),
+            backgroundColor: AppColors.error),
       );
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      await ApiService.post(ApiConfig.requests, {
+        'title': 'طلب وجبات مدرسية',
+        'description': _selectedMealTypes.join(', '),
+        'type': 'food',
+        'urgency': 'medium',
+        'isPublic': true,
+        'grade': _selectedGrade,
+        'mealTypes': _selectedMealTypes,
+        'hasDietaryRestrictions': _hasDietaryRestrictions,
+        if (_hasDietaryRestrictions) 'dietaryNotes': _dietaryNotes,
+      });
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم إرسال طلبك بنجاح')),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(e.userMessage), backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 }

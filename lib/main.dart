@@ -1,70 +1,104 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter/material.dart';
-import '/Style/app_colors.dart';
-import '../../constants/constants.dart';
-import 'Home_page/homepage.dart';
-import 'package:google_fonts/google_fonts.dart';
+// lib/main.dart
+// FIXES:
+//  - Restores saved login session on app start
+//  - Routes to correct dashboard based on role
+//  - Arabic RTL + Tajawal font applied globally
 
-void main() {
-  runApp(const HopeStepsApp());
+import 'package:flutter/material.dart';
+import 'auth/auth_service.dart';
+import 'auth/login_page.dart';
+import 'Dashboard/Student_dashboard.dart';
+import 'Dashboard/Donor_dashboard.dart';
+import 'Dashboard/Volunteer_dashboard.dart';
+import 'Style/app_colors.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Try to restore a saved JWT session before showing any UI
+  final bool isLoggedIn = await AuthService.instance.restoreSession();
+  final String? role = AuthService.instance.currentUser?.role;
+
+  runApp(StudentSupportApp(isLoggedIn: isLoggedIn, role: role));
 }
 
-class HopeStepsApp extends StatelessWidget {
-  const HopeStepsApp({Key? key}) : super(key: key);
+class StudentSupportApp extends StatelessWidget {
+  final bool isLoggedIn;
+  final String? role;
+
+  const StudentSupportApp({
+    Key? key,
+    required this.isLoggedIn,
+    this.role,
+  }) : super(key: key);
+
+  Widget get _home {
+    if (!isLoggedIn) return const LoginPage();
+    switch (role) {
+      case 'donor':
+        return const DonorDashboard();
+      case 'volunteer':
+        return const VolunteerDashboard();
+      default:
+        return const StudentDashboard();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'HopeSteps - خطوات الأمل',
-
-      // RTL Support for Arabic
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('ar', 'SA'), // Arabic
-        Locale('en', 'US'), // English
-      ],
-      locale: const Locale('ar', 'SA'),
-
+      title: 'خطوات الأمل',
+      // ── Global theme ──────────────────────────────────────────────────────
       theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
         primaryColor: AppColors.primary,
         scaffoldBackgroundColor: AppColors.background,
         fontFamily: 'Tajawal',
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
-          brightness: Brightness.light,
-          //  textTheme: GoogleFonts.sourceSans3TextTheme(),
-          //  textTheme: GoogleFonts.tajawalTextTheme(),
+          secondary: AppColors.secondary,
         ),
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
+          titleTextStyle: TextStyle(
+            fontFamily: 'Tajawal',
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(
+                fontFamily: 'Tajawal', fontWeight: FontWeight.bold),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Colors.grey[50],
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+        //cardTheme: CardTheme(
+        //   elevation: 2,
+        //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        //  margin: EdgeInsets.zero,
+        // ),
+        snackBarTheme: const SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
         ),
       ),
-
-      home: const HomePage(),
+      // Force RTL for the entire app
+      builder: (context, child) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: child!,
+      ),
+      home: _home,
     );
   }
 }
