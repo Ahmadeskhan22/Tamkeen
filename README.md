@@ -102,10 +102,8 @@ The Tamkeen application represents a meaningful contribution to humanitarian tec
 <img width="579" height="1280" alt="image" src="https://github.com/user-attachments/assets/c24cef49-24b4-46ba-8b25-c41a4f432d47" />
 
 
-<img width="579" height="1280" alt="image" src="https://github.com/user-attachments/assets/dd38f425-08ba-4dc2-8910-5497cbfe2b7e" />
 
 
-<img width="579" height="1280" alt="image" src="https://github.com/user-attachments/assets/384b5b48-e4d7-4748-80a8-5c1c4eba2115" />
 
 
 
