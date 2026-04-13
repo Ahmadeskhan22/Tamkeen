@@ -183,14 +183,26 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
   Future<void> _submitRequest() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
+
+    // بناء وصف مفصل ودقيق للطلب عشان الإدارة تفهم الاحتياج بالضبط
+    String desc = 'الصف الدراسي: $_selectedGrade | مقاس الزي: $_uniformSize';
+    if (_needWinterClothing) {
+      desc +=
+          ' | بحاجة لملابس شتوية${_winterSize != null ? ' (مقاس: $_winterSize)' : ''}';
+    }
+    if (_additionalNotes.isNotEmpty) {
+      desc += '\nملاحظات: $_additionalNotes';
+    }
+
     try {
+      // إرسال البيانات للسيرفر
       await ApiService.post(ApiConfig.requests, {
         'title': 'طلب زي مدرسي',
-        'description':
-            'مقاس: $_uniformSize${_needWinterClothing ? ' + ملابس شتوية' : ''}',
-        'type': 'uniform',
+        'description': desc,
+        'type': 'clothes', // ✅ تم التعديل لتطابق الباك إند
         'urgency': 'medium',
         'isPublic': true,
+        // إرسال باقي الحقول الإضافية (رح تتخزن كـ Metadata في الداتابيز)
         'grade': _selectedGrade,
         'uniformSize': _uniformSize,
         'needWinterClothing': _needWinterClothing,
@@ -201,14 +213,19 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
       if (!mounted) return;
       showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (_) => AlertDialog(
-          title: const Text('تم إرسال الطلب'),
-          content: const Text('سيتم مراجعة طلبك قريباً'),
+          title: const Row(children: [
+            Icon(Icons.check_circle, color: AppColors.success),
+            SizedBox(width: 8),
+            Text('تم إرسال الطلب'),
+          ]),
+          content: const Text('تم استلام طلبك بنجاح وسيتم مراجعته قريباً.'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
+                Navigator.pop(context); // إغلاق الـ Dialog
+                Navigator.pop(context); // الرجوع للرئيسية
               },
               child: const Text('حسناً'),
             ),
@@ -220,6 +237,13 @@ class _RequestUniformPageState extends State<RequestUniformPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(e.userMessage), backgroundColor: AppColors.error),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('حدث خطأ في الاتصال بالسيرفر'),
+            backgroundColor: AppColors.error),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);

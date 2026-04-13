@@ -1,7 +1,7 @@
 class AppConstants {
   // App Information
-  static const String appName = 'HopeSteps';
-  static const String appNameArabic = 'خطوات الأمل';
+  static const String appName = 'Tamkeen';
+  static const String appNameArabic = 'تمكين لتغيير للأفضل';
   static const String appTagline = 'معاً لدعم أطفالنا';
   static const String appVersion = '1.0.0';
 

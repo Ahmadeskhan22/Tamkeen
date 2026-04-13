@@ -10,6 +10,7 @@ import '../service/api_service.dart';
 import '../constants/api_config.dart';
 import '../auth/auth_service.dart';
 import '../auth/login_page.dart';
+import '../Dashboard/Volunteer_registration.dart';
 
 class VolunteerDashboard extends StatefulWidget {
   const VolunteerDashboard({Key? key}) : super(key: key);
@@ -170,7 +171,13 @@ class _VolunteerDashboardState extends State<VolunteerDashboard> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const VolunteerRegistrationPage()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),

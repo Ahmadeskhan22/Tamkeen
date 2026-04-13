@@ -8,6 +8,8 @@ import '../service/api_service.dart';
 import '../Dashboard/Student_dashboard.dart';
 import '../Dashboard/Donor_dashboard.dart';
 import '../Dashboard/Volunteer_dashboard.dart';
+import '../auth/forgot_password_page.dart';
+import '../widgets/animations/fade_entrance.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -18,7 +20,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController    = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -36,16 +38,21 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final user = await AuthService.instance.login(
-        email:    _emailController.text.trim(),
+        email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
       if (!mounted) return;
       Widget destination;
       switch (user.role) {
-        case 'donor':     destination = const DonorDashboard();     break;
-        case 'volunteer': destination = const VolunteerDashboard(); break;
-        default:          destination = const StudentDashboard();
+        case 'donor':
+          destination = const DonorDashboard();
+          break;
+        case 'volunteer':
+          destination = const VolunteerDashboard();
+          break;
+        default:
+          destination = const StudentDashboard();
       }
       Navigator.pushReplacement(
         context,
@@ -54,7 +61,8 @@ class _LoginPageState extends State<LoginPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.userMessage), backgroundColor: AppColors.error),
+        SnackBar(
+            content: Text(e.userMessage), backgroundColor: AppColors.error),
       );
     } catch (e) {
       if (!mounted) return;
@@ -79,25 +87,29 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const SizedBox(height: 40),
                 // Logo / Header
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                FadeEntrance(
+                  delay: Duration(milliseconds: 200),
+                  child: Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child:
+                        const Icon(Icons.school, color: Colors.white, size: 48),
                   ),
-                  child: const Icon(Icons.school, color: Colors.white, size: 48),
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'خطوات الأمل',
+                  'تمكين لتغيير للأفضل',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -107,84 +119,95 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 8),
                 Text(
                   'مرحباً بك! سجّل دخولك للمتابعة',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+                  style:
+                      TextStyle(color: AppColors.textSecondary, fontSize: 15),
                 ),
                 const SizedBox(height: 40),
                 // Form card
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        // Email
-                        TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: _inputDecoration('البريد الإلكتروني', Icons.email_outlined),
-                          validator: (v) {
-                            if (v == null || v.isEmpty) return 'أدخل البريد الإلكتروني';
-                            if (!v.contains('@')) return 'بريد إلكتروني غير صحيح';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        // Password
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          decoration: _inputDecoration(
-                            'كلمة المرور',
-                            Icons.lock_outline,
-                            suffix: IconButton(
-                              icon: Icon(_obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility),
-                              onPressed: () =>
-                                  setState(() => _obscurePassword = !_obscurePassword),
-                            ),
-                          ),
-                          validator: (v) =>
-                          (v == null || v.length < 6) ? 'كلمة المرور قصيرة جداً' : null,
-                        ),
-                        const SizedBox(height: 28),
-                        // Login button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _login,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2.5),
-                            )
-                                : const Text(
-                              'تسجيل الدخول',
-                              style: TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.bold),
-                            ),
-                          ),
+                FadeEntrance(
+                  delay: Duration(milliseconds: 200),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
                         ),
                       ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          // Email
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: _inputDecoration(
+                                'البريد الإلكتروني', Icons.email_outlined),
+                            validator: (v) {
+                              if (v == null || v.isEmpty)
+                                return 'أدخل البريد الإلكتروني';
+                              if (!v.contains('@'))
+                                return 'بريد إلكتروني غير صحيح';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          // Password
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            decoration: _inputDecoration(
+                              'كلمة المرور',
+                              Icons.lock_outline,
+                              suffix: IconButton(
+                                icon: Icon(_obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility),
+                                onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword),
+                              ),
+                            ),
+                            validator: (v) => (v == null || v.length < 6)
+                                ? 'كلمة المرور قصيرة جداً'
+                                : null,
+                          ),
+                          const SizedBox(height: 28),
+                          // Login button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _login,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5),
+                                    )
+                                  : const Text(
+                                      'تسجيل الدخول',
+                                      style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -193,14 +216,36 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text('ليس لديك حساب؟ '),
-                    GestureDetector(
-                      onTap: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const RegisterPage())),
-                      child: const Text(
-                        'إنشاء حساب',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const RegisterPage())),
+                        child: const Text(
+                          'إنشاء حساب',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: Align(
+                        alignment:
+                            Alignment.centerLeft, // لليسار لأننا نستخدم RTL
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ForgotPasswordPage()),
+                            );
+                          },
+                          child: const Text('نسيت كلمة المرور؟',
+                              style: TextStyle(color: AppColors.primary)),
                         ),
                       ),
                     ),
@@ -214,7 +259,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffix}) {
+  InputDecoration _inputDecoration(String label, IconData icon,
+      {Widget? suffix}) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: AppColors.primary),

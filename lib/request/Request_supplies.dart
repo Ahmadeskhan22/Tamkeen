@@ -204,7 +204,7 @@ class _RequestSuppliesPageState extends State<RequestSuppliesPage> {
       await ApiService.post(ApiConfig.requests, {
         'title': 'طلب أدوات مدرسية',
         'description': selectedItems.join(', '),
-        'type': 'supplies',
+        'type': 'stationery',
         'urgency': _isUrgent ? 'high' : 'medium',
         'isPublic': true,
         // extra metadata
